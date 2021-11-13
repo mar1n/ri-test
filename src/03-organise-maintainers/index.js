@@ -1,21 +1,4 @@
 const axios = require('axios').default;
-
-
-const response = async () => {
-  const myData = await axios
-    .get('https://api.npms.io/v2/search/suggestions?q=react')
-    .then(res => {
-      return res.data;
-    });
-  const maintainers = await myData
-    .map(element => {
-
-      return element.package;
-    });
-    console.log('maintainers', maintainers);
-  return await maintainers;
-};
-response();
 /**
  * Make the following POST request with either axios or node-fetch:
 
@@ -59,6 +42,40 @@ The results should have this structure:
 
 module.exports = async function organiseMaintainers() {
   // TODO
+  const myData = await axios
+    .get('https://api.npms.io/v2/search/suggestions?q=react')
+    .then(res => {
+      return res.data;
+    });
+  const getMaintainers = await myData.map(element => {
+    return element.package.maintainers;
+  });
+  let uniqu = getMaintainers
+    .flat()
+    .map(element => ({ username: element.username }));
+  const removeRepeting = [...new Set(uniqu.map(s => JSON.stringify(s)))].map(
+    s => JSON.parse(s),
+  );
 
-  return maintainers
+  const sortMaintainer = removeRepeting.sort((a, b) =>
+    a.username > b.username ? 1 : -1,
+  );
+  const maintainerPackage = sortMaintainer.map(maintainer => {
+    return {
+      username: maintainer.username,
+      packageNames: myData
+        .filter(packageName => {
+          if (
+            packageName.package.maintainers.find(
+              x => x.username === maintainer.username,
+            )
+          ) {
+            return packageName;
+          }
+        })
+        .map(value => value.package.name).sort(),
+    };
+  });
+
+  return maintainerPackage;
 };

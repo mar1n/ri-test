@@ -12,6 +12,7 @@ const response = async () => {
       return parseInt(element.package.version);
     })
     .filter(count => count > 10);
+
   return await countVersion.length;
 };
 response();
